@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Производственный календарь</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1><i class="fas fa-calendar-alt"></i> Производственный календарь</h1>
+        <div class="month-nav">
+          <button id="prevMonth" class="month-nav-btn">
+            <i class="fas fa-chevron-left"></i> Пред.
+          </button>
+          <div class="month-selector">
+            <h2 id="currentMonth" class="month-title">Май 2024</h2>
+            <div class="month-dropdown" id="monthDropdown">
+              <div class="year-selector">
+                <button class="year-nav" id="prevYear">
+                  <i class="fas fa-chevron-left"></i>
+                </button>
+                <span id="currentYear">2024</span>
+                <button class="year-nav" id="nextYear">
+                  <i class="fas fa-chevron-right"></i>
+                </button>
+              </div>
+              <div class="months-grid" id="monthsGrid"></div>
+            </div>
+          </div>
+          <button id="nextMonth" class="month-nav-btn">
+            След. <i class="fas fa-chevron-right"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="controls">
+        <button id="exportBtn" class="btn-export">
+          <i class="fas fa-download"></i> Экспорт
+        </button>
+        <label for="importInput" class="btn-import">
+          <i class="fas fa-upload"></i> Импорт
+          <input
+            type="file"
+            id="importInput"
+            accept=".json"
+            style="display: none"
+          />
+        </label>
+      </div>
+
+      <div class="filters">
+        <button class="filter-btn active" data-filter="all">Все дни</button>
+        <button class="filter-btn" data-filter="overtime">
+          С переработкой
+        </button>
+        <button class="filter-btn" data-filter="early">Уходил раньше</button>
+        <button class="filter-btn" data-filter="late">Приходил позже</button>
+        <button class="filter-btn" data-filter="comments">
+          С комментариями
+        </button>
+      </div>
+
+      <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input
+          type="text"
+          id="searchComments"
+          placeholder="Поиск по комментариям..."
+        />
+      </div>
+
+      <div class="stats">
+        <div class="stat-card">
+          <h3><i class="fas fa-clock"></i> Общая переработка</h3>
+          <p id="overtimeTotal">0 часов 0 минут</p>
+        </div>
+      </div>
+
+      <div class="progress-container">
+        <div class="progress-label">
+          Заполнение месяца: <span id="monthProgress">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <div class="calendar">
+        <div class="weekdays">
+          <div>Пн</div>
+          <div>Вт</div>
+          <div>Ср</div>
+          <div>Чт</div>
+          <div>Пт</div>
+          <div>Сб</div>
+          <div>Вс</div>
+        </div>
+        <div id="calendarDays" class="days"></div>
+      </div>
+
+      <div class="day-details" id="dayDetails">
+        <h3 id="selectedDate">Выберите день</h3>
+
+        <div class="form-group">
+          <label><i class="fas fa-business-time"></i> Переработка:</label>
+          <div class="time-inputs">
+            <div class="time-input">
+              <input
+                type="number"
+                id="overtimeHours"
+                min="0"
+                max="24"
+                placeholder="0"
+              />
+              <span>ч</span>
+            </div>
+            <div class="time-input">
+              <input
+                type="number"
+                id="overtimeMinutes"
+                min="0"
+                max="59"
+                placeholder="0"
+              />
+              <span>м</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label><i class="fas fa-running"></i> Ушел раньше:</label>
+          <div class="time-inputs">
+            <div class="time-input">
+              <input
+                type="number"
+                id="earlyHours"
+                min="0"
+                max="12"
+                placeholder="0"
+              />
+              <span>ч</span>
+            </div>
+            <div class="time-input">
+              <input
+                type="number"
+                id="earlyMinutes"
+                min="0"
+                max="59"
+                placeholder="0"
+              />
+              <span>м</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label><i class="fas fa-bed"></i> Пришел позже:</label>
+          <div class="time-inputs">
+            <div class="time-input">
+              <input
+                type="number"
+                id="lateHours"
+                min="0"
+                max="12"
+                placeholder="0"
+              />
+              <span>ч</span>
+            </div>
+            <div class="time-input">
+              <input
+                type="number"
+                id="lateMinutes"
+                min="0"
+                max="59"
+                placeholder="0"
+              />
+              <span>м</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label><i class="fas fa-comment"></i> Комментарии:</label>
+          <textarea
+            id="commentsInput"
+            placeholder="Введите комментарии..."
+          ></textarea>
+        </div>
+
+        <div class="button-group">
+          <button id="saveDay" class="btn-save">
+            <i class="fas fa-save"></i> Сохранить
+          </button>
+          <button id="clearDay" class="btn-clear">
+            <i class="fas fa-trash"></i> Очистить
+          </button>
+        </div>
+
+        <div class="saved-data" id="savedData">
+          <!-- Здесь будет отображаться сохраненная информация -->
+        </div>
+      </div>
+
+      <div class="advanced-stats" id="advancedStats">
+        <h3><i class="fas fa-chart-bar"></i> Расширенная статистика</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">Дней с данными</div>
+            <div class="stat-value" id="daysWithData">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Дней с переработкой</div>
+            <div class="stat-value" id="daysWithOvertime">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Дней уходов раньше</div>
+            <div class="stat-value" id="daysWithEarly">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Дней приходов позже</div>
+            <div class="stat-value" id="daysWithLate">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Дней с комментариями</div>
+            <div class="stat-value" id="daysWithComments">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Средняя переработка/день</div>
+            <div class="stat-value" id="avgOvertimePerDay">0ч 0м</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>Данные сохраняются локально в вашем браузере</p>
+      <div class="backup-controls">
+        <button id="createBackupBtn" class="btn-backup">
+          <i class="fas fa-copy"></i> Создать резервную копию
+        </button>
+        <button id="restoreBackupBtn" class="btn-restore">
+          <i class="fas fa-history"></i> Восстановить из резервной копии
+        </button>
+      </div>
+    </footer>
+
+    <!-- Модальное окно для восстановления резервных копий -->
+    <div id="backupModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3><i class="fas fa-history"></i> Резервные копии</h3>
+          <button class="close-modal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="backupList"></div>
+          <div class="modal-actions">
+            <button id="confirmRestoreBtn" class="btn-save">
+              Восстановить выбранную копию
+            </button>
+            <button id="cancelRestoreBtn" class="btn-clear">Отмена</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
