@@ -57,16 +57,89 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     },
 
-    validateTime: function (hours, minutes, maxHours = 24) {
-      hours = parseInt(hours) || 0;
-      minutes = parseInt(minutes) || 0;
+    validateTimeInput: function (inputId) {
+      const input = document.getElementById(inputId);
+      let value = parseInt(input.value) || 0;
 
-      if (hours < 0) hours = 0;
-      if (minutes < 0) minutes = 0;
-      if (hours > maxHours) hours = maxHours;
-      if (minutes > 59) minutes = 59;
+      if (inputId.includes("Minutes")) {
+        // Для минут: от 0 до 59
+        if (value < 0) value = 0;
+        if (value > 59) value = 59;
+      } else if (inputId.includes("Hours")) {
+        // Для часов: разные максимумы для переработки и ухода/прихода
+        if (inputId.includes("overtime")) {
+          // Переработка: максимум 999 часов
+          if (value < 0) value = 0;
+          if (value > 999) value = 999;
+        } else {
+          // Уход раньше/приход позже: максимум 12 часов
+          if (value < 0) value = 0;
+          if (value > 12) value = 12;
+        }
+      }
 
-      return { hours, minutes };
+      input.value = value;
+      return value;
+    },
+
+    normalizeMinutes: function (hours, minutes) {
+      // Если минут больше 59, добавляем избыток к часам
+      if (minutes >= 60) {
+        hours += Math.floor(minutes / 60);
+        minutes = minutes % 60;
+      }
+
+      // Корректируем часы в зависимости от типа
+      let maxHours = 999; // По умолчанию для переработки
+
+      if (hours > maxHours) {
+        hours = maxHours;
+      }
+
+      return {
+        hours: hours,
+        minutes: minutes,
+      };
+    },
+
+    validateAndNormalizeAll: function () {
+      // Получаем все значения
+      let overtimeHours =
+        parseInt(document.getElementById("overtimeHours").value) || 0;
+      let overtimeMinutes =
+        parseInt(document.getElementById("overtimeMinutes").value) || 0;
+      let earlyHours =
+        parseInt(document.getElementById("earlyHours").value) || 0;
+      let earlyMinutes =
+        parseInt(document.getElementById("earlyMinutes").value) || 0;
+      let lateHours = parseInt(document.getElementById("lateHours").value) || 0;
+      let lateMinutes =
+        parseInt(document.getElementById("lateMinutes").value) || 0;
+
+      // Нормализуем минуты
+      const normOvertime = this.normalizeMinutes(
+        overtimeHours,
+        overtimeMinutes,
+      );
+      const normEarly = this.normalizeMinutes(earlyHours, earlyMinutes);
+      const normLate = this.normalizeMinutes(lateHours, lateMinutes);
+
+      // Обновляем поля ввода
+      document.getElementById("overtimeHours").value = normOvertime.hours;
+      document.getElementById("overtimeMinutes").value = normOvertime.minutes;
+      document.getElementById("earlyHours").value = normEarly.hours;
+      document.getElementById("earlyMinutes").value = normEarly.minutes;
+      document.getElementById("lateHours").value = normLate.hours;
+      document.getElementById("lateMinutes").value = normLate.minutes;
+
+      return {
+        overtimeHours: normOvertime.hours,
+        overtimeMinutes: normOvertime.minutes,
+        earlyHours: normEarly.hours,
+        earlyMinutes: normEarly.minutes,
+        lateHours: normLate.hours,
+        lateMinutes: normLate.minutes,
+      };
     },
   };
 
@@ -209,24 +282,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
     timeInputs.forEach((id) => {
       const input = document.getElementById(id);
-      input.addEventListener("change", function () {
-        const maxHours = id.includes("overtime") ? 24 : 12;
-        const validated = TimeUtils.validateTime(this.value, 0, maxHours);
-        this.value = validated.hours;
 
-        // Проверка корректности
-        if (this.value < 0) {
-          this.classList.add("invalid");
-          this.value = 0;
-        } else if (this.value > maxHours && id.includes("Hours")) {
-          this.classList.add("invalid");
-          this.value = maxHours;
-        } else if (this.value > 59 && id.includes("Minutes")) {
-          this.classList.add("invalid");
-          this.value = 59;
-        } else {
-          this.classList.remove("invalid");
-        }
+      input.addEventListener("blur", function () {
+        TimeUtils.validateTimeInput(id);
+      });
+
+      input.addEventListener("change", function () {
+        TimeUtils.validateTimeInput(id);
       });
 
       input.addEventListener("input", function () {
@@ -416,11 +478,11 @@ document.addEventListener("DOMContentLoaded", function () {
           const lateIndicator = document.createElement("div");
           lateIndicator.classList.add("indicator", "late-indicator");
           if (dayData.lateHours > 0 && dayData.lateMinutes > 0) {
-            lateIndicator.textContent = `-${dayData.lateHours}ч ${dayData.lateMinutes}м`;
+            lateIndicator.textContent = `-${dayData.lateHours}ч ${dayData.lateMinutes}м опозд.`;
           } else if (dayData.lateHours > 0) {
-            lateIndicator.textContent = `-${dayData.lateHours}ч`;
+            lateIndicator.textContent = `-${dayData.lateHours}ч опозд.`;
           } else {
-            lateIndicator.textContent = `-${dayData.lateMinutes}м`;
+            lateIndicator.textContent = `-${dayData.lateMinutes}м опозд.`;
           }
           indicators.appendChild(lateIndicator);
         }
@@ -499,54 +561,24 @@ document.addEventListener("DOMContentLoaded", function () {
     displaySavedData(dayData);
   }
 
-  // Сохранение данных дня
+  // Сохранение данных дня с автоматической нормализацией
   function saveDayData() {
     const dateKey = `${selectedDate.getFullYear()}-${selectedDate.getMonth() + 1}-${selectedDate.getDate()}`;
 
-    // Валидация и получение значений
-    const overtimeHours = TimeUtils.validateTime(
-      document.getElementById("overtimeHours").value,
-      0,
-      24,
-    ).hours;
+    // Валидируем и нормализуем все значения
+    const normalizedValues = TimeUtils.validateAndNormalizeAll();
 
-    const overtimeMinutes = TimeUtils.validateTime(
-      0,
-      document.getElementById("overtimeMinutes").value,
-    ).minutes;
-
-    const earlyHours = TimeUtils.validateTime(
-      document.getElementById("earlyHours").value,
-      0,
-      12,
-    ).hours;
-
-    const earlyMinutes = TimeUtils.validateTime(
-      0,
-      document.getElementById("earlyMinutes").value,
-    ).minutes;
-
-    const lateHours = TimeUtils.validateTime(
-      document.getElementById("lateHours").value,
-      0,
-      12,
-    ).hours;
-
-    const lateMinutes = TimeUtils.validateTime(
-      0,
-      document.getElementById("lateMinutes").value,
-    ).minutes;
-
+    // Получаем комментарии
     const comments = document.getElementById("commentsInput").value.trim();
 
-    // Сохраняем данные
+    // Сохраняем нормализованные данные
     calendarData[dateKey] = {
-      overtimeHours,
-      overtimeMinutes,
-      earlyHours,
-      earlyMinutes,
-      lateHours,
-      lateMinutes,
+      overtimeHours: normalizedValues.overtimeHours,
+      overtimeMinutes: normalizedValues.overtimeMinutes,
+      earlyHours: normalizedValues.earlyHours,
+      earlyMinutes: normalizedValues.earlyMinutes,
+      lateHours: normalizedValues.lateHours,
+      lateMinutes: normalizedValues.lateMinutes,
       comments,
     };
 
@@ -1158,6 +1190,45 @@ document.addEventListener("DOMContentLoaded", function () {
     }, 3000);
   }
 
+  // Функция для получения общей переработки в минутах
+  function getTotalNetOvertimeMinutes() {
+    let totalNetOvertimeMinutes = 0;
+
+    // Считаем общую чистую переработку по всем дням
+    for (const dateKey in calendarData) {
+      const dayData = calendarData[dateKey];
+      const netOvertime = calculateNetOvertime(dayData);
+      totalNetOvertimeMinutes += netOvertime;
+    }
+
+    return totalNetOvertimeMinutes;
+  }
+
+  // Функция для отображения юмористического алерта
+  function showOvertimeHumor() {
+    const totalMinutes = getTotalNetOvertimeMinutes();
+    const hours = Math.abs(totalMinutes) / 60;
+
+    if (totalMinutes > 0) {
+      // Переработка > 0
+      alert("Работай раб, солнце еще высоко ☀️");
+    } else if (totalMinutes < 0 && hours <= 24) {
+      // Долг от 0 до -24 часов
+      alert("Сударь, вы начали наглеть 🎩");
+    } else if (totalMinutes < 0 && hours > 24) {
+      // Долг > 24 часов
+      alert("Ты че, ПЁС, совсем АХУЕЛ 😡");
+    } else {
+      // Нет переработки и нет долга
+      alert("Нормалек, работай дальше 👍");
+    }
+  }
+
+  // Добавляем обработчик клика на статистику переработки
+  document
+    .getElementById("overtimeTotal")
+    .addEventListener("click", showOvertimeHumor);
+
   // Добавляем стили для анимации уведомлений
   const style = document.createElement("style");
   style.textContent = `
@@ -1172,6 +1243,47 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     `;
   document.head.appendChild(style);
+
+  // Делаем статистику кликабельной (добавляем курсор-указатель)
+  const statCard = document.querySelector(".stat-card");
+  if (statCard) {
+    statCard.style.cursor = "pointer";
+    statCard.addEventListener("click", showOvertimeHumor);
+
+    // Добавляем эффект при наведении
+    statCard.addEventListener("mouseenter", function () {
+      this.style.transform = "scale(1.05)";
+      this.style.transition = "transform 0.3s ease";
+    });
+
+    statCard.addEventListener("mouseleave", function () {
+      this.style.transform = "scale(1)";
+    });
+  }
+
+  // Также делаем кликабельным заголовок статистики
+  const statTitle = document.querySelector(".stat-card h3");
+  if (statTitle) {
+    statTitle.style.cursor = "pointer";
+    statTitle.title = "Кликни для мотивации 💪";
+  }
+
+  // Добавляем подсказку при наведении на статистику
+  const overtimeTotal = document.getElementById("overtimeTotal");
+  if (overtimeTotal) {
+    overtimeTotal.style.cursor = "pointer";
+    overtimeTotal.title = "Кликни для мотивационного сообщения!";
+
+    // Эффект при наведении
+    overtimeTotal.addEventListener("mouseenter", function () {
+      this.style.color = "#3498db";
+      this.style.transition = "color 0.3s ease";
+    });
+
+    overtimeTotal.addEventListener("mouseleave", function () {
+      this.style.color = "#2c3e50";
+    });
+  }
 
   // Выбираем текущий день при загрузке
   selectDay(

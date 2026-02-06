@@ -919,6 +919,190 @@ footer {
   justify-content: center;
 }
 
+/* Стили для кликабельной статистики */
+.stat-card.clickable {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card.clickable::after {
+  content: "💪";
+  position: absolute;
+  bottom: -20px;
+  right: -20px;
+  font-size: 40px;
+  opacity: 0.1;
+  transition: all 0.3s ease;
+}
+
+.stat-card.clickable:hover::after {
+  bottom: -10px;
+  right: -10px;
+  opacity: 0.2;
+}
+
+/* Анимация пульсации для привлечения внимания */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.stat-card.clickable.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* Стили для иконки часов в статистике */
+.stat-card.clickable h3 i {
+  transition: transform 0.3s ease;
+}
+
+.stat-card.clickable:hover h3 i {
+  transform: rotate(15deg);
+}
+
+/* Стили для текста статистики при наведении */
+#overtimeTotal {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+#overtimeTotal:hover {
+  color: #3498db !important;
+  text-shadow: 0 2px 5px rgba(52, 152, 219, 0.3);
+}
+
+#overtimeTotal::after {
+  content: "👆";
+  position: absolute;
+  right: -25px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+#overtimeTotal:hover::after {
+  opacity: 1;
+}
+
+/* Стили для модального окна с мотивацией */
+.motivation-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 3000;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.motivation-modal.show {
+  display: flex;
+}
+
+.motivation-content {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: slideUp 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.motivation-content::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #e74c3c, #f39c12, #2ecc71);
+}
+
+.motivation-icon {
+  font-size: 60px;
+  margin-bottom: 20px;
+  animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.motivation-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+  margin-bottom: 20px;
+  line-height: 1.4;
+}
+
+.motivation-subtext {
+  color: #7f8c8d;
+  font-size: 16px;
+  margin-bottom: 30px;
+}
+
+.motivation-close {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 30px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+}
+
+.motivation-close:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+}
+
+/* Медиа-запросы для мотивационного окна */
+@media (max-width: 768px) {
+  .motivation-content {
+    margin: 20px;
+    padding: 30px 20px;
+  }
+
+  .motivation-text {
+    font-size: 20px;
+  }
+
+  .motivation-icon {
+    font-size: 50px;
+  }
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
   .container {
